@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"github.com/pingcap/parser/ast"
@@ -11,7 +11,7 @@ import (
 )
 
 // col0 * 0.8 + col1
-func buildExpr(ctx sessionctx.Context) expression.Expression {
+func BuildExpr(ctx sessionctx.Context) expression.Expression {
 	tpDouble := types.NewFieldType(mysql.TypeDouble)
 	constant := &expression.Constant{
 		RetType: tpDouble,
@@ -36,7 +36,7 @@ func buildExpr(ctx sessionctx.Context) expression.Expression {
 	return plus
 }
 
-func genData() *chunk.Chunk {
+func GenData() *chunk.Chunk {
 	tpDouble := types.NewFieldType(mysql.TypeDouble)
 	chk := chunk.New([]*types.FieldType{tpDouble, tpDouble}, 1024, 1024)
 	for i := 0; i < 1024; i ++ {
@@ -46,7 +46,7 @@ func genData() *chunk.Chunk {
 	return chk
 }
 
-func rowBasedEval(ctx sessionctx.Context, expr expression.Expression, data *chunk.Chunk) {
+func RowBasedEval(ctx sessionctx.Context, expr expression.Expression, data *chunk.Chunk) {
 	it := chunk.NewIterator4Chunk(data)
 	for i := 0; i < 10000; i++ {
 		for row := it.Begin(); row != it.End(); row = it.Next() {
@@ -57,7 +57,7 @@ func rowBasedEval(ctx sessionctx.Context, expr expression.Expression, data *chun
 	}
 }
 
-func vectorizedEval(ctx sessionctx.Context, expr expression.Expression, data *chunk.Chunk) {
+func VectorizedEval(ctx sessionctx.Context, expr expression.Expression, data *chunk.Chunk) {
 	buf := chunk.NewColumn(types.NewFieldType(mysql.TypeDouble), 1024)
 	for i := 0; i < 10000; i++ {
 		if err := expr.VecEvalReal(ctx, data, buf); err != nil {
@@ -66,11 +66,6 @@ func vectorizedEval(ctx sessionctx.Context, expr expression.Expression, data *ch
 	}
 }
 
-func main() {
-	ctx := mock.NewContext()
-	expr := buildExpr(ctx)
-	data := genData()
-	rowBasedEval(ctx, expr, data)
-	//vectorizedEval(ctx, expr, data)
+func MockCtx() sessionctx.Context {
+	return mock.NewContext()
 }
-
